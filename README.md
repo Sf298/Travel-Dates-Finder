@@ -34,7 +34,7 @@ These instructions will show you how to setup the program and find your trips.
 
 * Now that your Google Location History is downloaded you should extract the .json file onto your computer.
 
-* Next, download the [TravelDatesFinder.jar]() file.
+* Next, download the [TravelDatesFinder.jar](https://github.com/Sf298/Travel-Dates-Finder/raw/master/TravelDatesFinder.jar) file.
 
 * Now your are all set up!
 
