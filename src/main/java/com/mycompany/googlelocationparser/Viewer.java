@@ -44,9 +44,9 @@ import org.json.simple.parser.ParseException;
  */
 public class Viewer {
     
-    private static File locationFile = null;
-    private static String API_KEY = null;
-    private static int flightDist = -1; 
+    private static File locationFile = new File("C:\\Users\\demon\\Desktop/Location History.json");
+    private static String API_KEY = "AIzaSyDkFEAXxwuN8y-VoYhnX_SxeJPrsTh3GP0";
+    private static int flightDist = 200000; 
     
     public static void main(String[] args) {
         
