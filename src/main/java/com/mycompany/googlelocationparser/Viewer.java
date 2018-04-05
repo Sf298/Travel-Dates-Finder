@@ -24,6 +24,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,6 +39,8 @@ import org.json.simple.parser.ParseException;
 public class Viewer {
     
     private static File locationFile = new File("C:\\Users\\demon\\Desktop/Location History.json");
+    private static String API_KEY = null; // = "AIzaSyDkFEAXxwuN8y-VoYhnX_SxeJPrsTh3GP0";
+    private static int flightDist = 200000; 
     
     public static void main(String[] args) {
         if(locationFile == null) {
@@ -46,6 +49,30 @@ public class Viewer {
             jfc.setFileFilter(new FileNameExtensionFilter("JSON", "json"));
             jfc.showOpenDialog(null);
             locationFile = jfc.getSelectedFile();
+        }
+        if(locationFile == null || !locationFile.exists()) {
+            return;
+        }
+        
+        while(API_KEY == null || API_KEY.length()==0) {
+            GetterFrame gf = new GetterFrame(null, "Enter Google API Key");
+            JTextField tf = gf.addTextField("Google API Key (see README.md on GitHub)");
+            gf.showAndComplete(500, 300);
+            if(gf.wasWindowManuallyClosed()) {
+                System.exit(0);
+            }
+            API_KEY = tf.getText();
+        }
+        
+        while(flightDist == -1) {
+            GetterFrame gf = new GetterFrame(null, "Minimum Flight Distance");
+            JTextField tf = gf.addTextField("Enter the minimum distance for a flight");
+            tf.setText("200000");
+            gf.showAndComplete(500, 300);
+            if(gf.wasWindowManuallyClosed()) {
+                System.exit(0);
+            }
+            flightDist = Integer.valueOf(tf.getText());
         }
         
         JSONParser parser = new JSONParser();
@@ -80,7 +107,7 @@ public class Viewer {
                     getLon(arr, pair[1]),
                     getLon(arr, pair[0])
             );
-            if(dist > 200000) {
+            if(dist > flightDist) {
                 out.add(pairToCountry(arr, pair));
             }
         }
@@ -157,7 +184,6 @@ public class Viewer {
         
         return out;
     }
-    private static final String API_KEY = "AIzaSyDkFEAXxwuN8y-VoYhnX_SxeJPrsTh3GP0";
     private static String coordToCountry(double lat, double lon) {
         String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&key=%s";
         // https://maps.googleapis.com/maps/api/geocode/json?latlng=34.3050044,35.7072063&key=AIzaSyB8y8AbE568hM2CFNPDtn-Js3xXL8QkVTM
