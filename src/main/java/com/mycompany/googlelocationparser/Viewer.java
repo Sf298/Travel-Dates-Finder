@@ -5,6 +5,7 @@
  */
 package com.mycompany.googlelocationparser;
 
+import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,8 +25,13 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -39,10 +45,12 @@ import org.json.simple.parser.ParseException;
 public class Viewer {
     
     private static File locationFile = new File("C:\\Users\\demon\\Desktop/Location History.json");
-    private static String API_KEY = null; // = "AIzaSyDkFEAXxwuN8y-VoYhnX_SxeJPrsTh3GP0";
+    private static String API_KEY = "AIzaSyDkFEAXxwuN8y-VoYhnX_SxeJPrsTh3GP0";
     private static int flightDist = 200000; 
     
     public static void main(String[] args) {
+        
+        // init variables
         if(locationFile == null) {
             JFileChooser jfc = new JFileChooser();
             jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -75,21 +83,52 @@ public class Viewer {
             flightDist = Integer.valueOf(tf.getText());
         }
         
-        JSONParser parser = new JSONParser();
-        try {
-            JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(locationFile));
-
-            JSONArray locations = (JSONArray) jsonObject.get("locations");
-            ArrayList<String[]> flights = getFlights(locations);
-            for (String[] flight : flights) {
-                System.out.println(flight[0] + ": " + flight[1] +" ----> "+flight[2] + " "+flight[3]);
+        // init output table
+        String[] columnNames = {"Date", "From", "To", "Distance (km)"};
+        DefaultTableModel dtm = new DefaultTableModel(0, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+               return false;
             }
-            
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(Viewer.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException | ParseException ex) {
-            Logger.getLogger(Viewer.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        };
+        dtm.setColumnIdentifiers(columnNames);
+        JTable table = new JTable(dtm);
+         JScrollPane scrollPane = new JScrollPane(table);
+         table.setFillsViewportHeight(true);
+        
+        JLabel statusLabel = new JLabel("Processing... May take a few minutes");
+        JFrame frame = new JFrame("results");
+         frame.setSize(500, 500);
+         frame.add(statusLabel, BorderLayout.NORTH);
+         frame.add(scrollPane, BorderLayout.CENTER);
+         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         frame.setVisible(true);
+        
+        // begin parsing
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                JSONParser parser = new JSONParser();
+                try {
+                    JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(locationFile));
+
+                    JSONArray locations = (JSONArray) jsonObject.get("locations");
+                    ArrayList<String[]> flights = getFlights(locations);
+                    for (String[] flight : flights) {
+                        dtm.addRow(flight);
+                        System.out.println(flight[0] + ": " + flight[1] +" ----> "+flight[2] + " "+flight[3]);
+                    }
+                    statusLabel.setText("Done.");
+
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(Viewer.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (IOException | ParseException ex) {
+                    Logger.getLogger(Viewer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
+        t.start();
+        
     }
     
     private static ArrayList<String[]> getFlights(JSONArray arr) {
@@ -180,7 +219,7 @@ public class Viewer {
         out[0] = df.format(getCal(arr, pair[0]).getTime());
         out[2] = coordToCountry(lat0, lon0);
         out[1] = coordToCountry(lat1, lon1);
-        out[3] = distance(lat0, lat1, lon0, lon1) + "";
+        out[3] = distance(lat0, lat1, lon0, lon1)/1000 + ""; // kilometers
         
         return out;
     }
